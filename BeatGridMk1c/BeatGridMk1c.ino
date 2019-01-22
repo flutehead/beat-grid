@@ -41,7 +41,7 @@
 // ----------------------------------------------------------------------------
 
 // Mozzi control update rate [Hz], powers of 2, >= 64
-#define CONTROL_RATE 64
+#define CONTROL_RATE 128
 
 // use: Sample <table_size, update_rate> SampleName (wavetable)
 Sample <kick909short_NUM_CELLS, AUDIO_RATE>     kickSamp(kick909short_DATA);
@@ -666,19 +666,23 @@ void updateControl() {
           }
           envelope.noteOn();
         }
-        if (beatCnt & 0x01) {
+
+        if (0 == beatCnt) {
           SYNC_PORT |= SYNC_MASK;         // sync output HIGH for every 2nd beat
+        }
+        if (1 == beatCnt) {
+          SYNC_PORT &= ~SYNC_MASK;          // sync output back to LOW 
         }
       } else if (1 == tickCnt) {
         if ((bassNoteTrig[stepCnt] & MASK_OFF) && (thisStep & MASK_GHOST)) {
           envelope.noteOff();
         }
-        SYNC_PORT &= ~SYNC_MASK;          // sync output back to LOW 
       } else if (2 == tickCnt) {
         if (bassNoteTrig[stepCnt] & MASK_OFF) {
           envelope.noteOff();
         }
       }
+
 
       tickCnt++;                // 12 ticks one 4 beat measure
       if (tickCnt >= 3) {
@@ -725,8 +729,7 @@ void updateControl() {
           beatCnt = 0;
           stepCnt = 0;
           measure = 0;
-          sequencerMode = SEQ_MODE_RUNNING;
-          SYNC_PORT |= SYNC_MASK;           // sync output HIGH when starting
+          sequencerMode = SEQ_MODE_RUNNING; // sync output is started with the first beat
         }
       } else if (controller.justPressed(CTRL_CLEAR_E)) {
         isClearEnabled = true;
@@ -1036,4 +1039,3 @@ void loop(){
 
 // end of file
 // ----------------------------------------------------------------------------
-
